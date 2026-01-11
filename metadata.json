@@ -1,0 +1,5 @@
+{
+  "name": "RPSLS Battle",
+  "description": "A feature-rich Rock Paper Scissors Lizard Spock game featuring an AI opponent with personality powered by Gemini.",
+  "requestFramePermissions": []
+}
