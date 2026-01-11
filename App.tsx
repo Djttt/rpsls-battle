@@ -178,6 +178,8 @@ const App: React.FC = () => {
     return APP_STRINGS.lose[language];
   };
 
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-purple-500 selection:text-white pb-20">
 
@@ -197,6 +199,17 @@ const App: React.FC = () => {
           </div>
 
           <div className="flex items-center space-x-6 text-sm md:text-base font-mono">
+
+            <button
+              onClick={() => setShowLeaderboard(true)}
+              className="p-2 rounded-full hover:bg-slate-800 text-yellow-400 hover:text-yellow-300 transition-colors flex items-center gap-2"
+              title="Leaderboard"
+            >
+              <Trophy size={20} />
+              <span className="hidden md:inline text-xs font-bold uppercase">Rank</span>
+            </button>
+            <div className="h-8 w-px bg-slate-700"></div>
+
             <div className="flex flex-col items-end">
               <span className="text-slate-400 text-xs uppercase">{APP_STRINGS.player[language]}</span>
               <span className="font-bold text-green-400 text-xl">{score.player}</span>
@@ -232,6 +245,15 @@ const App: React.FC = () => {
           </div>
         </div>
       </header>
+
+      {/* Leaderboard Overlay */}
+      {showLeaderboard && (
+        <div className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200" onClick={() => setShowLeaderboard(false)}>
+          <div onClick={(e) => e.stopPropagation()} className="w-full max-w-md animate-in zoom-in-95 duration-200">
+            <Leaderboard onClose={() => setShowLeaderboard(false)} />
+          </div>
+        </div>
+      )}
 
       {/* Auth Modal */}
       {!currentUser && <Auth onLogin={setCurrentUser} />}
@@ -399,11 +421,6 @@ const App: React.FC = () => {
         </div>
 
         <RulesCard language={language} />
-
-        {/* Leaderboard Section */}
-        <div className="mt-16 mb-16">
-          <Leaderboard />
-        </div>
 
       </main>
     </div>
