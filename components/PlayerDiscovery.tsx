@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { discoveryService, gameService } from '../services/api';
 import { Radio, RefreshCw, Wifi } from 'lucide-react';
+import { APP_STRINGS } from '../constants';
+import { Language } from '../types';
 
-export const PlayerDiscovery: React.FC<{ currentUser: any }> = ({ currentUser }) => {
+export const PlayerDiscovery: React.FC<{ currentUser: any, language: Language }> = ({ currentUser, language }) => {
     const [peers, setPeers] = useState<any[]>([]);
     const [scanning, setScanning] = useState(false);
     const [inviting, setInviting] = useState<string | null>(null);
@@ -28,11 +30,11 @@ export const PlayerDiscovery: React.FC<{ currentUser: any }> = ({ currentUser })
         setInviting(peer.ip);
         try {
             await gameService.sendChallenge(peer.ip, peer.username, password || undefined);
-            alert(`Challenge sent to ${peer.username}!`);
+            alert(`${APP_STRINGS.challengeSent[language]} ${peer.username}!`);
             setPassword(''); // Reset password after send
         } catch (error) {
             console.error("Challenge error", error);
-            alert("Failed to send challenge");
+            alert(APP_STRINGS.challengeFailed[language]);
         } finally {
             setInviting(null);
         }
@@ -56,12 +58,12 @@ export const PlayerDiscovery: React.FC<{ currentUser: any }> = ({ currentUser })
             <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                     <Wifi className="text-indigo-400" />
-                    <h3 className="text-lg font-bold text-white">Local Players</h3>
+                    <h3 className="text-lg font-bold text-white">{APP_STRINGS.localPlayers[language]}</h3>
                 </div>
                 <button
                     onClick={scanPeers}
                     className={`p-2 rounded-lg bg-slate-800 text-slate-300 hover:text-white transition-colors ${scanning ? 'animate-spin' : ''}`}
-                    title="Refresh"
+                    title={APP_STRINGS.refresh[language]}
                 >
                     <RefreshCw size={18} />
                 </button>
@@ -70,7 +72,7 @@ export const PlayerDiscovery: React.FC<{ currentUser: any }> = ({ currentUser })
             <div className="mb-4">
                 <input
                     type="text"
-                    placeholder="Room Password (Optional)"
+                    placeholder={APP_STRINGS.roomPasswordOptional[language]}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500"
@@ -79,7 +81,7 @@ export const PlayerDiscovery: React.FC<{ currentUser: any }> = ({ currentUser })
 
             {peers.length === 0 ? (
                 <div className="text-center py-6 text-slate-500 text-sm border-2 border-dashed border-slate-800 rounded-lg">
-                    No players found nearby.
+                    {APP_STRINGS.noPlayersFound[language]}
                 </div>
             ) : (
                 <div className="space-y-2">
@@ -96,7 +98,7 @@ export const PlayerDiscovery: React.FC<{ currentUser: any }> = ({ currentUser })
                                     disabled={inviting === peer.ip}
                                     className="text-xs bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-700 text-white px-3 py-1 rounded transition-colors"
                                 >
-                                    {inviting === peer.ip ? 'Sending...' : 'Challenge'}
+                                    {inviting === peer.ip ? APP_STRINGS.sending[language] : APP_STRINGS.challenge[language]}
                                 </button>
                             )}
                         </div>

@@ -2,13 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { gameService } from '../services/api';
 import { Swords, Check, X, Bell } from 'lucide-react';
 import { MultiplayerBoard } from './MultiplayerBoard';
+import { APP_STRINGS } from '../constants';
+import { Language } from '../types';
 
 interface MultiplayerManagerProps {
     currentUser: { username: string };
     onGameStart: () => void; // Callback to hide main menu if needed
+    language: Language;
 }
 
-export const MultiplayerManager: React.FC<MultiplayerManagerProps> = ({ currentUser, onGameStart }) => {
+export const MultiplayerManager: React.FC<MultiplayerManagerProps> = ({ currentUser, onGameStart, language }) => {
     const [invites, setInvites] = useState<any[]>([]);
     const [activeGame, setActiveGame] = useState<{ id: string, hostIp?: string } | null>(null);
     const [polling, setPolling] = useState(true);
@@ -19,7 +22,6 @@ export const MultiplayerManager: React.FC<MultiplayerManagerProps> = ({ currentU
         const interval = setInterval(async () => {
             try {
                 const res = await gameService.getInvites();
-                // Filter out processed invites if needed, backend currently just dumps all
                 setInvites(res.data);
             } catch (e) {
                 console.error("Poll invites error", e);
@@ -32,14 +34,12 @@ export const MultiplayerManager: React.FC<MultiplayerManagerProps> = ({ currentU
     const [selectedInvite, setSelectedInvite] = useState<any | null>(null);
 
     const handleAccept = async (invite: any) => {
-        // If invite needs password and we haven't selected it/entered it, show input
         if (invite.has_password && selectedInvite !== invite) {
             setSelectedInvite(invite);
             return;
         }
 
         try {
-            // invite contains: game_id, from_ip, from_user
             await gameService.acceptInvite(invite.game_id, invite.from_ip, passwordInput || undefined);
             setActiveGame({ id: invite.game_id, hostIp: invite.from_ip });
             setPolling(false);
@@ -48,11 +48,10 @@ export const MultiplayerManager: React.FC<MultiplayerManagerProps> = ({ currentU
             setSelectedInvite(null);
         } catch (e) {
             console.error("Accept error", e);
-            alert("Failed to join game (Wrong Password?)");
+            alert(APP_STRINGS.joinFailed[language]);
         }
     };
 
-    // If active game, render the board
     if (activeGame) {
         return (
             <MultiplayerBoard
@@ -67,7 +66,6 @@ export const MultiplayerManager: React.FC<MultiplayerManagerProps> = ({ currentU
         );
     }
 
-    // Render invites notification
     if (invites.length === 0) return null;
 
     return (
@@ -79,16 +77,16 @@ export const MultiplayerManager: React.FC<MultiplayerManagerProps> = ({ currentU
                             <Swords size={24} className="text-white" />
                         </div>
                         <div>
-                            <h4 className="font-bold text-white text-sm">Challenge Received!</h4>
-                            <p className="text-xs text-slate-400">from <span className="text-indigo-300 font-mono">{invite.from_user}</span></p>
-                            {invite.has_password && <p className="text-[10px] text-yellow-400">🔒 Password Protected</p>}
+                            <h4 className="font-bold text-white text-sm">{APP_STRINGS.challengeReceived[language]}</h4>
+                            <p className="text-xs text-slate-400">{APP_STRINGS.from[language]} <span className="text-indigo-300 font-mono">{invite.from_user}</span></p>
+                            {invite.has_password && <p className="text-[10px] text-yellow-400">🔒 {APP_STRINGS.passwordProtected[language]}</p>}
                         </div>
                     </div>
 
                     {selectedInvite === invite && (
                         <input
                             type="text"
-                            placeholder="Enter Password..."
+                            placeholder={APP_STRINGS.enterPasswordDots[language]}
                             className="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-white"
                             value={passwordInput}
                             onChange={(e) => setPasswordInput(e.target.value)}

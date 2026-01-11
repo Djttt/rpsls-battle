@@ -2,11 +2,15 @@ import React, { useState } from 'react';
 import { authService } from '../services/api';
 import { User, Lock, LogIn } from 'lucide-react';
 
+import { APP_STRINGS } from '../constants';
+import { Language } from '../types';
+
 interface AuthProps {
     onLogin: (user: any) => void;
+    language: Language;
 }
 
-export const Auth: React.FC<AuthProps> = ({ onLogin }) => {
+export const Auth: React.FC<AuthProps> = ({ onLogin, language }) => {
     const [isLogin, setIsLogin] = useState(true);
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
@@ -27,7 +31,7 @@ export const Auth: React.FC<AuthProps> = ({ onLogin }) => {
             }
         } catch (err: any) {
             console.error(err);
-            setError(err.response?.data?.error || 'An error occurred');
+            setError(err.response?.data?.error || APP_STRINGS.authError[language]);
         }
     };
 
@@ -41,10 +45,10 @@ export const Auth: React.FC<AuthProps> = ({ onLogin }) => {
                 </div>
 
                 <h2 className="text-3xl font-bold text-center mb-2 text-white">
-                    {isLogin ? 'Welcome Back' : 'Create Account'}
+                    {isLogin ? APP_STRINGS.welcomeBack[language] : APP_STRINGS.createAccount[language]}
                 </h2>
                 <p className="text-slate-400 text-center mb-8">
-                    {isLogin ? 'Enter your credentials to continue' : 'Sign up to battle with friends'}
+                    {isLogin ? APP_STRINGS.enterCredentials[language] : APP_STRINGS.signUpText[language]}
                 </p>
 
                 {error && (
@@ -55,7 +59,7 @@ export const Auth: React.FC<AuthProps> = ({ onLogin }) => {
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                        <label className="block text-slate-400 text-sm font-bold mb-2">Username</label>
+                        <label className="block text-slate-400 text-sm font-bold mb-2">{APP_STRINGS.username[language]}</label>
                         <div className="relative">
                             <User className="absolute left-3 top-3 text-slate-500" size={18} />
                             <input
@@ -63,14 +67,14 @@ export const Auth: React.FC<AuthProps> = ({ onLogin }) => {
                                 value={username}
                                 onChange={(e) => setUsername(e.target.value)}
                                 className="w-full bg-slate-800 border border-slate-700 rounded-lg py-3 pl-10 pr-4 text-white focus:outline-none focus:border-indigo-500 transition-colors"
-                                placeholder="Enter username"
+                                placeholder={APP_STRINGS.enterUsername[language]}
                                 required
                             />
                         </div>
                     </div>
 
                     <div>
-                        <label className="block text-slate-400 text-sm font-bold mb-2">Password</label>
+                        <label className="block text-slate-400 text-sm font-bold mb-2">{APP_STRINGS.password[language]}</label>
                         <div className="relative">
                             <Lock className="absolute left-3 top-3 text-slate-500" size={18} />
                             <input
@@ -78,7 +82,7 @@ export const Auth: React.FC<AuthProps> = ({ onLogin }) => {
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 className="w-full bg-slate-800 border border-slate-700 rounded-lg py-3 pl-10 pr-4 text-white focus:outline-none focus:border-indigo-500 transition-colors"
-                                placeholder="Enter password"
+                                placeholder={APP_STRINGS.enterPassword[language]}
                                 required
                             />
                         </div>
@@ -88,7 +92,7 @@ export const Auth: React.FC<AuthProps> = ({ onLogin }) => {
                         type="submit"
                         className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold py-3 rounded-lg shadow-lg transform transition-all duration-200 hover:-translate-y-1"
                     >
-                        {isLogin ? 'Sign In' : 'Create Account'}
+                        {isLogin ? APP_STRINGS.signIn[language] : APP_STRINGS.createAccount[language]}
                     </button>
                 </form>
 
@@ -97,7 +101,7 @@ export const Auth: React.FC<AuthProps> = ({ onLogin }) => {
                         onClick={() => setIsLogin(!isLogin)}
                         className="text-slate-400 hover:text-white text-sm transition-colors"
                     >
-                        {isLogin ? "Don't have an account? Sign Up" : 'Already have an account? Sign In'}
+                        {isLogin ? APP_STRINGS.noAccount[language] : APP_STRINGS.hasAccount[language]}
                     </button>
                 </div>
             </div>

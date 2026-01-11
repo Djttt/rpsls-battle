@@ -9,11 +9,15 @@ interface LeaderboardEntry {
     draws: number;
 }
 
+import { APP_STRINGS } from '../constants';
+import { Language } from '../types';
+
 interface LeaderboardProps {
     onClose?: () => void;
+    language: Language;
 }
 
-export const Leaderboard: React.FC<LeaderboardProps> = ({ onClose }) => {
+export const Leaderboard: React.FC<LeaderboardProps> = ({ onClose, language }) => {
     const [leaders, setLeaders] = useState<LeaderboardEntry[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -29,7 +33,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ onClose }) => {
             setLoading(false);
         } catch (e) {
             console.error(e);
-            setError('Failed to load leaderboard');
+            setError(APP_STRINGS.leaderboardError[language]);
             setLoading(false);
         }
     };
@@ -44,16 +48,16 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ onClose }) => {
 
             <div className="flex items-center gap-3 mb-6 border-b border-slate-800 pb-4">
                 <Trophy className="text-yellow-400" size={24} />
-                <h2 className="text-xl font-bold text-white uppercase tracking-wider">Leaderboard</h2>
+                <h2 className="text-xl font-bold text-white uppercase tracking-wider">{APP_STRINGS.leaderboard[language]}</h2>
             </div>
 
-            {loading && <div className="text-white text-center p-4">Loading top warriors...</div>}
+            {loading && <div className="text-white text-center p-4">{APP_STRINGS.loadingLeaderboard[language]}</div>}
             {error && <div className="text-red-400 text-center p-4"><AlertCircle className="inline mr-2" />{error}</div>}
 
             {!loading && !error && (
                 <div className="space-y-2 max-h-[60vh] overflow-y-auto custom-scrollbar">
                     {leaders.length === 0 ? (
-                        <p className="text-slate-500 text-center italic">No battles recorded yet.</p>
+                        <p className="text-slate-500 text-center italic">{APP_STRINGS.noBattles[language]}</p>
                     ) : (
                         leaders.map((player, idx) => (
                             <div key={idx} className="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg hover:bg-slate-800 transition-colors">

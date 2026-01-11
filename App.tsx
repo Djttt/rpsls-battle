@@ -250,13 +250,13 @@ const App: React.FC = () => {
       {showLeaderboard && (
         <div className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200" onClick={() => setShowLeaderboard(false)}>
           <div onClick={(e) => e.stopPropagation()} className="w-full max-w-md animate-in zoom-in-95 duration-200">
-            <Leaderboard onClose={() => setShowLeaderboard(false)} />
+            <Leaderboard onClose={() => setShowLeaderboard(false)} language={language} />
           </div>
         </div>
       )}
 
       {/* Auth Modal */}
-      {!currentUser && <Auth onLogin={setCurrentUser} />}
+      {!currentUser && <Auth onLogin={setCurrentUser} language={language} />}
 
       {/* Multiplayer Manager (Handles Invites & Active Game) */}
       {currentUser && (
@@ -265,6 +265,7 @@ const App: React.FC = () => {
           onGameStart={() => {
             // Could hide header or other elements if needed
           }}
+          language={language}
         />
       )}
 
@@ -272,7 +273,7 @@ const App: React.FC = () => {
       <main className="max-w-5xl mx-auto px-4 pt-28 md:pt-32">
 
         {/* LAN Discovery Panel */}
-        {currentUser && <PlayerDiscovery currentUser={currentUser} />}
+        {currentUser && <PlayerDiscovery currentUser={currentUser} language={language} />}
 
         {/* Battle Area */}
         <div className="relative min-h-[400px] flex flex-col justify-between">
