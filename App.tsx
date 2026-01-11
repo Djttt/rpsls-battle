@@ -5,6 +5,7 @@ import { MoveButton } from './components/MoveButton';
 import { RulesCard } from './components/RulesCard';
 import { Auth } from './components/Auth';
 import { PlayerDiscovery } from './components/PlayerDiscovery';
+import { MultiplayerManager } from './components/MultiplayerManager';
 import { getGeminiCommentary } from './services/geminiService';
 import { authService } from './services/api';
 import { Sparkles, Trophy, Skull, RefreshCw, Bot, User as UserIcon, Globe, LogOut } from 'lucide-react';
@@ -234,11 +235,21 @@ const App: React.FC = () => {
       {/* Auth Modal */}
       {!currentUser && <Auth onLogin={setCurrentUser} />}
 
+      {/* Multiplayer Manager (Handles Invites & Active Game) */}
+      {currentUser && (
+        <MultiplayerManager
+          currentUser={currentUser}
+          onGameStart={() => {
+            // Could hide header or other elements if needed
+          }}
+        />
+      )}
+
       {/* Main Content - Added padding top to account for fixed header */}
       <main className="max-w-5xl mx-auto px-4 pt-28 md:pt-32">
 
         {/* LAN Discovery Panel */}
-        {currentUser && <PlayerDiscovery />}
+        {currentUser && <PlayerDiscovery currentUser={currentUser} />}
 
         {/* Battle Area */}
         <div className="relative min-h-[400px] flex flex-col justify-between">

@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { discoveryService } from '../services/api';
+import { discoveryService, gameService } from '../services/api';
 import { Radio, RefreshCw, Wifi } from 'lucide-react';
 
-export const PlayerDiscovery: React.FC = () => {
+export const PlayerDiscovery: React.FC<{ currentUser: any }> = ({ currentUser }) => {
     const [peers, setPeers] = useState<any[]>([]);
     const [scanning, setScanning] = useState(false);
+    const [inviting, setInviting] = useState<string | null>(null);
 
     const scanPeers = async () => {
         setScanning(true);
@@ -18,6 +19,19 @@ export const PlayerDiscovery: React.FC = () => {
         } finally {
             // Keep scanning visually for a bit
             setTimeout(() => setScanning(false), 1000);
+        }
+    };
+
+    const handleChallenge = async (peer: any) => {
+        setInviting(peer.ip);
+        try {
+            await gameService.sendChallenge(peer.ip, peer.username);
+            alert(`Challenge sent to ${peer.username}!`);
+        } catch (error) {
+            console.error("Challenge error", error);
+            alert("Failed to send challenge");
+        } finally {
+            setInviting(null);
         }
     };
 
@@ -63,9 +77,15 @@ export const PlayerDiscovery: React.FC = () => {
                                 <span className="font-bold text-white">{peer.username}</span>
                                 <span className="text-xs text-slate-500 font-mono">({peer.ip})</span>
                             </div>
-                            <button className="text-xs bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1 rounded transition-colors">
-                                Challenge
-                            </button>
+                            {peer.username !== currentUser.username && (
+                                <button
+                                    onClick={() => handleChallenge(peer)}
+                                    disabled={inviting === peer.ip}
+                                    className="text-xs bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-700 text-white px-3 py-1 rounded transition-colors"
+                                >
+                                    {inviting === peer.ip ? 'Sending...' : 'Challenge'}
+                                </button>
+                            )}
                         </div>
                     ))}
                 </div>
