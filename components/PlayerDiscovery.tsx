@@ -22,11 +22,14 @@ export const PlayerDiscovery: React.FC<{ currentUser: any }> = ({ currentUser })
         }
     };
 
+    const [password, setPassword] = useState('');
+
     const handleChallenge = async (peer: any) => {
         setInviting(peer.ip);
         try {
-            await gameService.sendChallenge(peer.ip, peer.username);
+            await gameService.sendChallenge(peer.ip, peer.username, password || undefined);
             alert(`Challenge sent to ${peer.username}!`);
+            setPassword(''); // Reset password after send
         } catch (error) {
             console.error("Challenge error", error);
             alert("Failed to send challenge");
@@ -62,6 +65,16 @@ export const PlayerDiscovery: React.FC<{ currentUser: any }> = ({ currentUser })
                 >
                     <RefreshCw size={18} />
                 </button>
+            </div>
+
+            <div className="mb-4">
+                <input
+                    type="text"
+                    placeholder="Room Password (Optional)"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500"
+                />
             </div>
 
             {peers.length === 0 ? (

@@ -21,8 +21,8 @@ export const discoveryService = {
 
 export const gameService = {
     getInvites: () => api.get('/game/invites'),
-    sendChallenge: (targetIp: string, targetUsername: string) => api.post('/game/challenge', { target_ip: targetIp, target_username: targetUsername }),
-    acceptInvite: (gameId: string, hostIp: string) => api.post(`/game/${gameId}/accept`, { host_ip: hostIp }),
+    sendChallenge: (targetIp: string, targetUsername: string, password?: string) => api.post('/game/challenge', { target_ip: targetIp, target_username: targetUsername, password }),
+    acceptInvite: (gameId: string, hostIp: string, password?: string) => api.post(`/game/${gameId}/accept`, { host_ip: hostIp, password }),
     submitMove: (gameId: string, username: string, move: string, hostIp?: string) => {
         // If we are guest, we need to send move to HOST's backend.
         // But for simplicity/security (CORS), maybe we proxy through our backend?
@@ -36,5 +36,10 @@ export const gameService = {
     getGameState: (gameId: string, hostIp?: string) => {
         const url = hostIp ? `http://${hostIp}:5001/api/game/${gameId}/state` : `/game/${gameId}/state`;
         return axios.get(url, { withCredentials: true });
+    },
+    getLeaderboard: () => api.get('/game/leaderboard'),
+    sendEmote: (gameId: string, emote: string, sender: string, hostIp?: string) => {
+        const url = hostIp ? `http://${hostIp}:5001/api/game/${gameId}/emote` : `/game/${gameId}/emote`;
+        return axios.post(url, { emote, sender }, { withCredentials: true });
     }
 };

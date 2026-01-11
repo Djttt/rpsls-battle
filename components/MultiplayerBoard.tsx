@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { gameService } from '../services/api';
 import { MOVES_LIST, GAME_RULES, APP_STRINGS } from '../constants';
 import { Move, GameResult } from '../types';
 import { MoveButton } from './MoveButton';
-import { LogOut, RefreshCw } from 'lucide-react';
+import { LogOut, RefreshCw, Smile } from 'lucide-react';
 
 interface MultiplayerBoardProps {
     gameId: string;
@@ -15,19 +15,125 @@ interface MultiplayerBoardProps {
 export const MultiplayerBoard: React.FC<MultiplayerBoardProps> = ({ gameId, hostIp, topUser, onExit }) => {
     const [gameState, setGameState] = useState<any>(null);
     const [myMove, setMyMove] = useState<Move | null>(null);
-    // Use simple polling for game state
+    const [lastProcessedEvent, setLastProcessedEvent] = useState<number>(0);
+    const [activeEmote, setActiveEmote] = useState<{ emoji: string, sender: string } | null>(null);
+    const [showEmotePicker, setShowEmotePicker] = useState(false);
 
+    // Sounds
+    // Using simple online hosted sounds or generated ones. For now, assuming some URLs or just avoiding actual audio files if not provided.
+    // I made a promise to use sounds. I will try to use browser SpeechSynthesis as a fallback for "Battle" sound or simple beeps if no assets.
+    // Actually, "Sound Sync" implies actual SFX. I'll assume assets not present, so I'll generate beep/synth sounds.
+
+    const playSound = (type: 'move' | 'win' | 'lose' | 'draw' | 'start' | 'emote') => {
+        const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+
+        if (type === 'move') {
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
+            gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+            oscillator.start();
+            oscillator.stop(audioContext.currentTime + 0.1);
+        } else if (type === 'start') {
+            oscillator.type = 'triangle';
+            oscillator.frequency.setValueAtTime(300, audioContext.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(600, audioContext.currentTime + 0.5);
+            gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+            oscillator.start();
+            oscillator.stop(audioContext.currentTime + 0.5);
+        } else if (type === 'win') {
+            oscillator.type = 'square';
+            oscillator.frequency.setValueAtTime(400, audioContext.currentTime);
+            oscillator.frequency.setValueAtTime(600, audioContext.currentTime + 0.2);
+            oscillator.frequency.setValueAtTime(800, audioContext.currentTime + 0.4);
+            gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+            oscillator.start();
+            oscillator.stop(audioContext.currentTime + 0.6);
+        } else if (type === 'lose') {
+            oscillator.type = 'sawtooth';
+            oscillator.frequency.setValueAtTime(300, audioContext.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(100, audioContext.currentTime + 0.5);
+            gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+            oscillator.start();
+            oscillator.stop(audioContext.currentTime + 0.5);
+        } else if (type === 'emote') {
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(1200, audioContext.currentTime + 0.2);
+            gainNode.gain.setValueAtTime(0.05, audioContext.currentTime);
+            oscillator.start();
+            oscillator.stop(audioContext.currentTime + 0.2);
+        }
+    };
+    // Use simple polling for game state
     useEffect(() => {
         const interval = setInterval(async () => {
             try {
                 const res = await gameService.getGameState(gameId, hostIp);
-                setGameState(res.data);
+                const newState = res.data;
+                setGameState(newState);
+
+                // Handle Events
+                if (newState.last_event && newState.last_event.timestamp > lastProcessedEvent) {
+                    setLastProcessedEvent(newState.last_event.timestamp);
+                    const evt = newState.last_event;
+
+                    if (evt.type === 'start') {
+                        playSound('start');
+                    } else if (evt.type === 'emote') {
+                        playSound('emote');
+                        setActiveEmote({ emoji: evt.emote, sender: evt.sender });
+                        setTimeout(() => setActiveEmote(null), 3000);
+                    } else if (evt.type === 'fight') {
+                        // Decide win/loss for sound
+                        // This is tricky as we need to calculate it or wait for render logic
+                        // We will just play a 'move' sound or specialized
+                        // Let's defer to result calculation logic to play sound?
+                        // Or just play a general 'impact' sound here
+                        playSound('move');
+                    }
+                }
+
             } catch (e) {
                 console.error("Game state poll error", e);
             }
         }, 1000);
         return () => clearInterval(interval);
-    }, [gameId, hostIp]);
+    }, [gameId, hostIp, lastProcessedEvent]);
+
+    const sendEmote = async (emoji: string) => {
+        try {
+            await gameService.sendEmote(gameId, emoji, topUser, hostIp);
+            setShowEmotePicker(false);
+            // Local feedback handled by poll usually, or specific?
+            // User wants sync, so waiting for poll is better for "sync" feeling? 
+            // Or instant local. Let's wait for poll.
+        } catch (e) { console.error(e); }
+    };
+
+    // Play win/lose sound when result appears
+    useEffect(() => {
+        if (gameState && gameState.state === 'finished') {
+            // Calculate result
+            const amIHost = !hostIp;
+            const myMoveFinal = amIHost ? gameState.host_move : gameState.guest_move;
+            const oppMoveFinal = amIHost ? gameState.guest_move : gameState.host_move;
+
+            let myResult = GameResult.DRAW;
+            if (myMoveFinal !== oppMoveFinal) {
+                const rule = GAME_RULES[myMoveFinal as Move];
+                const win = rule.beats.find(b => b.target === oppMoveFinal);
+                myResult = win ? GameResult.WIN : GameResult.LOSE;
+            }
+
+            if (myResult === GameResult.WIN) playSound('win');
+            else if (myResult === GameResult.LOSE) playSound('lose');
+        }
+    }, [gameState?.state]); // Trigger only when state changes to finished
 
     const handleMove = async (moveId: Move) => {
         try {
@@ -145,6 +251,41 @@ export const MultiplayerBoard: React.FC<MultiplayerBoardProps> = ({ gameId, host
                         </div>
                         <p className="mt-4 text-slate-500">{opponentMoved ? 'Ready' : 'Thinking...'}</p>
                     </div>
+                </div>
+
+                {/* Emote Display */}
+                {activeEmote && (
+                    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 animate-in zoom-in spin-in-12 duration-500 pointer-events-none">
+                        <div className="text-9xl filter drop-shadow-[0_0_20px_rgba(255,255,255,0.5)]">
+                            {activeEmote.emoji}
+                        </div>
+                        <p className="text-center font-bold text-white bg-black/50 rounded px-2 mt-2">{activeEmote.sender}</p>
+                    </div>
+                )}
+
+                {/* Emote Picker Trigger */}
+                <div className="absolute bottom-8 right-8 z-40">
+                    <button
+                        onClick={() => setShowEmotePicker(!showEmotePicker)}
+                        className="bg-slate-800 p-4 rounded-full text-yellow-400 hover:bg-slate-700 transition-colors shadow-lg border border-slate-700"
+                        title="Taunt / Emote"
+                    >
+                        <Smile size={32} />
+                    </button>
+
+                    {showEmotePicker && (
+                        <div className="absolute bottom-16 right-0 bg-slate-900 border border-slate-700 p-4 rounded-xl shadow-2xl w-64 grid grid-cols-4 gap-2">
+                            {['😀', '😂', '😎', '🤔', '😭', '😡', '😱', '👍', '👎', '👏', '🔥', '🐔'].map(emoji => (
+                                <button
+                                    key={emoji}
+                                    onClick={() => sendEmote(emoji)}
+                                    className="text-2xl hover:bg-slate-800 p-2 rounded transition-colors"
+                                >
+                                    {emoji}
+                                </button>
+                            ))}
+                        </div>
+                    )}
                 </div>
 
                 {/* Controls */}

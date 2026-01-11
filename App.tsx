@@ -6,6 +6,7 @@ import { RulesCard } from './components/RulesCard';
 import { Auth } from './components/Auth';
 import { PlayerDiscovery } from './components/PlayerDiscovery';
 import { MultiplayerManager } from './components/MultiplayerManager';
+import { Leaderboard } from './components/Leaderboard';
 import { getGeminiCommentary } from './services/geminiService';
 import { authService } from './services/api';
 import { Sparkles, Trophy, Skull, RefreshCw, Bot, User as UserIcon, Globe, LogOut } from 'lucide-react';
@@ -398,6 +399,11 @@ const App: React.FC = () => {
         </div>
 
         <RulesCard language={language} />
+
+        {/* Leaderboard Section */}
+        <div className="mt-16 mb-16">
+          <Leaderboard />
+        </div>
 
       </main>
     </div>
