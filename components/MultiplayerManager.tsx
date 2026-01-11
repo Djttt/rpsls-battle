@@ -2,19 +2,31 @@ import React, { useState, useEffect } from 'react';
 import { gameService } from '../services/api';
 import { Swords, Check, X, Bell } from 'lucide-react';
 import { MultiplayerBoard } from './MultiplayerBoard';
+import { Lobby } from './Lobby';
 import { APP_STRINGS } from '../constants';
 import { Language } from '../types';
 
 interface MultiplayerManagerProps {
     currentUser: { username: string };
-    onGameStart: () => void; // Callback to hide main menu if needed
+    onGameStart: () => void;
+    activeGameId?: string; // If passed from parent (e.g. created room)
+    onGameEnd: () => void;
     language: Language;
 }
 
-export const MultiplayerManager: React.FC<MultiplayerManagerProps> = ({ currentUser, onGameStart, language }) => {
+export const MultiplayerManager: React.FC<MultiplayerManagerProps> = ({ currentUser, onGameStart, activeGameId, onGameEnd, language }) => {
     const [invites, setInvites] = useState<any[]>([]);
-    const [activeGame, setActiveGame] = useState<{ id: string, hostIp?: string } | null>(null);
+    const [activeGame, setActiveGame] = useState<{ id: string, hostIp?: string, state: 'lobby' | 'active' } | null>(null);
     const [polling, setPolling] = useState(true);
+
+    // Initial Active Game Check (if we created one from outside)
+    useEffect(() => {
+        if (activeGameId && !activeGame) {
+            setActiveGame({ id: activeGameId, state: 'lobby', hostIp: undefined }); // hostIp undefined implies localhost
+            setPolling(false);
+            onGameStart();
+        }
+    }, [activeGameId]);
 
     // Poll for invites
     useEffect(() => {
@@ -40,28 +52,57 @@ export const MultiplayerManager: React.FC<MultiplayerManagerProps> = ({ currentU
         }
 
         try {
-            await gameService.acceptInvite(invite.game_id, invite.from_ip, passwordInput || undefined);
-            setActiveGame({ id: invite.game_id, hostIp: invite.from_ip });
+            await gameService.joinRoom(invite.game_id, invite.from_ip, passwordInput || undefined);
+            setActiveGame({ id: invite.game_id, hostIp: invite.from_ip, state: 'lobby' }); // Assume lobby on join
             setPolling(false);
             onGameStart();
             setPasswordInput('');
             setSelectedInvite(null);
-        } catch (e) {
-            console.error("Accept error", e);
-            alert(APP_STRINGS.joinFailed[language]);
+            setInvites([]); // Clear invites
+        } catch (e: any) {
+            console.error("Join error", e);
+            const msg = e.response?.data?.error || APP_STRINGS.joinFailed[language];
+            alert(msg);
         }
     };
 
+    const handleExit = async () => {
+        if (activeGame) {
+            try {
+                // If in lobby, we leave room. If active, we forfeit/leave?
+                // For now just leave room endpoint.
+                await gameService.leaveRoom(activeGame.id);
+            } catch (e) { console.error(e); }
+        }
+        setActiveGame(null);
+        setPolling(true);
+        onGameEnd();
+    };
+
     if (activeGame) {
+        if (activeGame.state === 'lobby') {
+            return (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur">
+                    <div className="w-full max-w-4xl">
+                        <Lobby
+                            gameId={activeGame.id}
+                            hostIp={activeGame.hostIp}
+                            currentUser={currentUser}
+                            onStart={() => setActiveGame({ ...activeGame, state: 'active' })}
+                            onLeave={handleExit}
+                            language={language}
+                        />
+                    </div>
+                </div>
+            );
+        }
+
         return (
             <MultiplayerBoard
                 gameId={activeGame.id}
                 hostIp={activeGame.hostIp}
                 topUser={currentUser.username}
-                onExit={() => {
-                    setActiveGame(null);
-                    setPolling(true);
-                }}
+                onExit={handleExit}
             />
         );
     }
@@ -102,7 +143,7 @@ export const MultiplayerManager: React.FC<MultiplayerManagerProps> = ({ currentU
                             <Check size={16} />
                         </button>
                         <button
-                            onClick={() => {/* Reject? Need backend support or just ignore */ }}
+                            onClick={() => {/* Reject */ }}
                             className="p-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-slate-400 hover:text-white transition-colors"
                             title="Ignore"
                         >

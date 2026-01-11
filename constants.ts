@@ -50,12 +50,28 @@ export const APP_STRINGS: Record<string, LocalizedText> = {
   challengeSent: { en: 'Challenge sent to', zh: '挑战已发送给' },
   challengeFailed: { en: 'Failed to send challenge', zh: '挑战发送失败' },
 
+  // Room & Lobby
+  createRoom: { en: 'Create Room', zh: '创建房间' },
+  customRoom: { en: 'Custom Room', zh: '自定义房间' },
+  maxPlayers: { en: 'Max Players', zh: '最大玩家数' },
+  seriesLength: { en: 'Series Length', zh: '赛制' },
+  bestOf: { en: 'Best of', zh: '抢' },
+  rounds: { en: 'Rounds', zh: '局' },
+  password: { en: 'Password', zh: '密码' },
+  optional: { en: 'Optional', zh: '可选' },
+  lobby: { en: 'Lobby', zh: '大厅' },
+  ready: { en: 'READY', zh: '已准备' },
+  notReady: { en: 'NOT READY', zh: '未准备' },
+  startGame: { en: 'START GAME', zh: '开始游戏' },
+  waitingForHost: { en: 'Waiting for Host...', zh: '等待房主...' },
+  leave: { en: 'Leave', zh: '离开' },
+
   // Invites
   challengeReceived: { en: 'Challenge Received!', zh: '收到挑战！' },
   from: { en: 'from', zh: '来自' },
   passwordProtected: { en: 'Password Protected', zh: '密码保护' },
   enterPasswordDots: { en: 'Enter Password...', zh: '输入密码...' },
-  joinFailed: { en: 'Failed to join game (Wrong Password?)', zh: '加入游戏失败（密码错误？）' },
+  joinFailed: { en: 'Failed to join game (Wrong Password?)', zh: '加入游戏失败（密码错误？）' }
 };
 
 // The specific verbs for the game logic

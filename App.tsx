@@ -9,7 +9,8 @@ import { MultiplayerManager } from './components/MultiplayerManager';
 import { Leaderboard } from './components/Leaderboard';
 import { getGeminiCommentary } from './services/geminiService';
 import { authService } from './services/api';
-import { Sparkles, Trophy, Skull, RefreshCw, Bot, User as UserIcon, Globe, LogOut } from 'lucide-react';
+import { CreateRoomModal } from './components/CreateRoomModal';
+import { Sparkles, Trophy, Skull, RefreshCw, Bot, User as UserIcon, Globe, LogOut, Play } from 'lucide-react';
 
 const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<{ username: string } | null>(null);
@@ -178,7 +179,11 @@ const App: React.FC = () => {
     return APP_STRINGS.lose[language];
   };
 
+
+
   const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [showCreateRoom, setShowCreateRoom] = useState(false);
+  const [activeGameId, setActiveGameId] = useState<string | undefined>(undefined);
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-purple-500 selection:text-white pb-20">
@@ -246,6 +251,18 @@ const App: React.FC = () => {
         </div>
       </header>
 
+      {/* Create Room Modal */}
+      {showCreateRoom && (
+        <CreateRoomModal
+          onClose={() => setShowCreateRoom(false)}
+          onRoomCreated={(id) => {
+            setActiveGameId(id);
+            // The MultiplayerManager will pick this up and show Lobby
+          }}
+          language={language}
+        />
+      )}
+
       {/* Leaderboard Overlay */}
       {showLeaderboard && (
         <div className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200" onClick={() => setShowLeaderboard(false)}>
@@ -263,14 +280,29 @@ const App: React.FC = () => {
         <MultiplayerManager
           currentUser={currentUser}
           onGameStart={() => {
-            // Could hide header or other elements if needed
+            // Game started (Lobby or Board)
           }}
+          activeGameId={activeGameId}
+          onGameEnd={() => setActiveGameId(undefined)}
           language={language}
         />
       )}
 
       {/* Main Content - Added padding top to account for fixed header */}
       <main className="max-w-5xl mx-auto px-4 pt-28 md:pt-32">
+
+        {/* Room Controls (Only if logged in) */}
+        {currentUser && !activeGameId && (
+          <div className="mb-8 flex justify-end">
+            <button
+              onClick={() => setShowCreateRoom(true)}
+              className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-3 rounded-xl font-bold shadow-lg transition-transform active:scale-95"
+            >
+              <Play size={20} fill="currentColor" />
+              {APP_STRINGS.createRoom[language]}
+            </button>
+          </div>
+        )}
 
         {/* LAN Discovery Panel */}
         {currentUser && <PlayerDiscovery currentUser={currentUser} language={language} />}
