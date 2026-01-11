@@ -13,16 +13,22 @@ const flaskPlugin = () => {
 
       const pythonProcess = spawn(command, args, {
         stdio: 'inherit',
-        shell: true
       });
 
       pythonProcess.on('error', (err) => {
         console.error('Failed to start Flask backend:', err);
       });
 
-      process.on('exit', () => pythonProcess.kill());
-      process.on('SIGINT', () => pythonProcess.kill());
-      process.on('SIGTERM', () => pythonProcess.kill());
+      const killPython = () => {
+        if (pythonProcess && !pythonProcess.killed) {
+          pythonProcess.kill();
+        }
+      };
+
+      process.on('exit', killPython);
+      process.on('SIGINT', killPython);
+      process.on('SIGTERM', killPython);
+      process.on('SIGQUIT', killPython);
     }
   };
 };

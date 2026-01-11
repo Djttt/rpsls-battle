@@ -13,7 +13,7 @@ def create_app():
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-    CORS(app, supports_credentials=True, origins=["http://localhost:5173", "http://127.0.0.1:5173"]) # Allow frontend to talk to backend
+    CORS(app, supports_credentials=True, resources={r"/*": {"origins": "*"}}) # Allow all origins for LAN dev
     
     app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
     app.config['SESSION_COOKIE_SECURE'] = False # Set to True for HTTPS
@@ -43,3 +43,5 @@ if __name__ == '__main__':
     # Start LAN discovery listener in background if needed
     lan_service.start_listening() 
     app.run(host='0.0.0.0', port=5001, debug=True)
+
+# Trigger reload
