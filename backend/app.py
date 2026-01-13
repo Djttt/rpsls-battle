@@ -13,7 +13,21 @@ def create_app():
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-    CORS(app, supports_credentials=True, resources={r"/*": {"origins": "*"}}) # Allow all origins for LAN dev
+    allowed_origins_env = os.environ.get('ALLOWED_ORIGINS')
+    if allowed_origins_env:
+        allowed_origins = [origin.strip() for origin in allowed_origins_env.split(',') if origin.strip()]
+    else:
+        # Default allow private-network HTTP origins (dev LAN play) and localhost dev
+        allowed_origins = [
+            r"http://localhost(:\d+)?",
+            r"http://127\.0\.0\.1(:\d+)?",
+            r"http://10\.\d{1,3}\.\d{1,3}\.\d{1,3}(:\d+)?",
+            r"http://192\.168\.\d{1,3}\.\d{1,3}(:\d+)?",
+            r"http://172\.(1[6-9]|2[0-9]|3[0-1])\.\d{1,3}(:\d+)?",
+        ]
+
+    # Echo back the actual Origin (not "*") so browsers accept cookies with credentials
+    CORS(app, supports_credentials=True, resources={r"/*": {"origins": allowed_origins}})
     
     app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
     app.config['SESSION_COOKIE_SECURE'] = False # Set to True for HTTPS

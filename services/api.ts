@@ -1,9 +1,22 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5001/api';
+const resolveApiUrl = (): string => {
+    const envUrl = import.meta.env.VITE_API_URL?.trim();
+    if (envUrl) {
+        return `${envUrl.replace(/\/$/, '')}/api`;
+    }
+
+    if (typeof window !== 'undefined') {
+        const { protocol, hostname } = window.location;
+        const port = import.meta.env.VITE_API_PORT || '5001';
+        return `${protocol}//${hostname}:${port}/api`;
+    }
+
+    return 'http://localhost:5001/api';
+};
 
 export const api = axios.create({
-    baseURL: API_URL,
+    baseURL: resolveApiUrl(),
     withCredentials: true,
 });
 
